@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "Pw4zgi4QcEs=",
+  "success": true,
+  "projectFilePath": "/Users/julinhomazuelostauma/Documents/InventarioInteligente/InventarioInteligenteBack/InventarioInteligenteBack.csproj",
+  "expectedPackageFiles": [
+    "/Users/julinhomazuelostauma/.nuget/packages/microsoft.aspnetcore.openapi/9.0.9/microsoft.aspnetcore.openapi.9.0.9.nupkg.sha512",
+    "/Users/julinhomazuelostauma/.nuget/packages/microsoft.openapi/1.6.17/microsoft.openapi.1.6.17.nupkg.sha512"
+  ],
+  "logs": []
+}
