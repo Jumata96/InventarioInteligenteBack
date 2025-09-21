@@ -1,11 +1,14 @@
 using InventarioInteligenteBack.Application.Interfaces;
 using InventarioInteligenteBack.Api.DTOs;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+
 
 namespace InventarioInteligenteBack.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class ProductosController : ControllerBase
     {
         private readonly IProductoService _service;

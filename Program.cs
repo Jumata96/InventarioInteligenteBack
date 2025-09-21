@@ -9,6 +9,7 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 Env.Load();
+builder.Configuration.AddEnvironmentVariables();
 
 // 1. Conexión a BD
 var connectionString = Env.GetString("CONNECTIONSTRINGS__DEFAULT");
