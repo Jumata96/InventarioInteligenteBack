@@ -1,6 +1,6 @@
-using InventarioInteligente.DTOs;
+using InventarioInteligenteBack.Api.DTOs;
 
-namespace InventarioInteligente.Application.Interfaces
+namespace InventarioInteligenteBack.Application.Interfaces
 {
     public interface IProductoService
     {

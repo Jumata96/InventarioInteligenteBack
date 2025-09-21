@@ -1,4 +1,4 @@
-namespace InventarioInteligente.Domain.Entities
+namespace InventarioInteligenteBack.Domain.Entities
 {
     public class DetallePedido
     {

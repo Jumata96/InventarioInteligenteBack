@@ -1,8 +1,8 @@
-using InventarioInteligente.Application.Interfaces;
-using InventarioInteligente.DTOs;
+using InventarioInteligenteBack.Application.Interfaces;
+using InventarioInteligenteBack.Api.DTOs;
 using Microsoft.AspNetCore.Mvc;
 
-namespace InventarioInteligente.Controllers
+namespace InventarioInteligenteBack.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]

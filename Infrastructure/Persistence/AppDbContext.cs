@@ -1,9 +1,11 @@
-using InventarioInteligente.Domain.Entities;
+using InventarioInteligenteBack.Domain.Entities;
+using InventarioInteligenteBack.Infrastructure.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace InventarioInteligente.Infrastructure.Persistence
+namespace InventarioInteligenteBack.Infrastructure.Persistence
 {
-    public class AppDbContext : DbContext
+    public class AppDbContext : IdentityDbContext<ApplicationUser>
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
@@ -17,7 +19,7 @@ namespace InventarioInteligente.Infrastructure.Persistence
 
         protected override void OnModelCreating(ModelBuilder mb)
         {
-            base.OnModelCreating(mb);
+            base.OnModelCreating(mb); // ⚠️ Esto ahora incluye las tablas de Identity
 
             // ===== Paises =====
             mb.Entity<Pais>(e =>
@@ -29,8 +31,6 @@ namespace InventarioInteligente.Infrastructure.Persistence
                 e.Property(x => x.Nombre).HasColumnType("varchar(100)").IsRequired();
                 e.Property(x => x.Activo).HasDefaultValue(true);
                 e.Property(x => x.FechaCreacion).HasColumnType("datetime2").HasDefaultValueSql("SYSUTCDATETIME()");
-                e.Property(x => x.FechaEdicion).HasColumnType("datetime2");
-                e.Property(x => x.FechaEliminacion).HasColumnType("datetime2");
             });
 
             // ===== Clientes =====
@@ -41,14 +41,6 @@ namespace InventarioInteligente.Infrastructure.Persistence
                 e.Property(x => x.Ruc).HasColumnType("varchar(13)").IsRequired();
                 e.HasIndex(x => x.Ruc).IsUnique();
                 e.Property(x => x.Nombre).HasColumnType("varchar(200)").IsRequired();
-                e.Property(x => x.Email).HasColumnType("varchar(200)");
-                e.Property(x => x.Telefono).HasColumnType("varchar(50)");
-                e.Property(x => x.Direccion).HasColumnType("varchar(300)");
-                e.Property(x => x.Activo).HasDefaultValue(true);
-                e.Property(x => x.FechaCreacion).HasColumnType("datetime2").HasDefaultValueSql("SYSUTCDATETIME()");
-                e.Property(x => x.FechaEdicion).HasColumnType("datetime2");
-                e.Property(x => x.FechaEliminacion).HasColumnType("datetime2");
-
                 e.HasOne(x => x.Pais)
                  .WithMany(x => x.Clientes)
                  .HasForeignKey(x => x.PaisId)
@@ -62,11 +54,6 @@ namespace InventarioInteligente.Infrastructure.Persistence
                 e.HasKey(x => x.ImpuestoId);
                 e.Property(x => x.Nombre).HasColumnType("varchar(50)").IsRequired();
                 e.Property(x => x.Porcentaje).HasColumnType("decimal(5,2)");
-                e.Property(x => x.Activo).HasDefaultValue(true);
-                e.Property(x => x.FechaCreacion).HasColumnType("datetime2").HasDefaultValueSql("SYSUTCDATETIME()");
-                e.Property(x => x.FechaEdicion).HasColumnType("datetime2");
-                e.Property(x => x.FechaEliminacion).HasColumnType("datetime2");
-
                 e.HasOne(x => x.Pais)
                  .WithMany(x => x.Impuestos)
                  .HasForeignKey(x => x.PaisId)
@@ -80,15 +67,7 @@ namespace InventarioInteligente.Infrastructure.Persistence
                 e.HasKey(x => x.ProductoId);
                 e.Property(x => x.Nombre).HasColumnType("varchar(150)").IsRequired();
                 e.HasIndex(x => x.Nombre).IsUnique();
-                e.Property(x => x.Descripcion).HasColumnType("varchar(500)");
                 e.Property(x => x.Precio).HasColumnType("decimal(18,2)");
-                e.Property(x => x.Stock).IsRequired();
-                e.Property(x => x.Activo).HasDefaultValue(true);
-                e.Property(x => x.FechaCreacion).HasColumnType("datetime2").HasDefaultValueSql("SYSUTCDATETIME()");
-                e.Property(x => x.FechaEdicion).HasColumnType("datetime2");
-                e.Property(x => x.FechaEliminacion).HasColumnType("datetime2");
-
-                // Checks (opcional)
                 e.ToTable(t =>
                 {
                     t.HasCheckConstraint("CK_Productos_Precio_Positive", "[Precio] > 0");
@@ -101,24 +80,13 @@ namespace InventarioInteligente.Infrastructure.Persistence
             {
                 e.ToTable("Pedidos");
                 e.HasKey(x => x.PedidoId);
-                e.Property(x => x.Secuencial).HasColumnType("varchar(30)");
-                e.HasIndex(x => x.Secuencial).IsUnique(); // permite 1 NULL
-                e.Property(x => x.Estado).HasColumnType("varchar(20)").HasDefaultValue("Emitido").IsRequired();
+                e.Property(x => x.Estado).HasColumnType("varchar(20)").HasDefaultValue("Emitido");
                 e.Property(x => x.Subtotal).HasColumnType("decimal(18,2)");
-                e.Property(x => x.Descuento).HasColumnType("decimal(18,2)").HasDefaultValue(0);
-                e.Property(x => x.Impuesto).HasColumnType("decimal(18,2)");
                 e.Property(x => x.Total).HasColumnType("decimal(18,2)");
-                e.Property(x => x.Activo).HasDefaultValue(true);
-                e.Property(x => x.Fecha).HasColumnType("datetime2");
-                e.Property(x => x.FechaCreacion).HasColumnType("datetime2").HasDefaultValueSql("SYSUTCDATETIME()");
-                e.Property(x => x.FechaEdicion).HasColumnType("datetime2");
-                e.Property(x => x.FechaEliminacion).HasColumnType("datetime2");
-
                 e.HasOne(x => x.Cliente)
                  .WithMany()
                  .HasForeignKey(x => x.ClienteId)
                  .OnDelete(DeleteBehavior.NoAction);
-
                 e.HasOne(x => x.Pais)
                  .WithMany()
                  .HasForeignKey(x => x.PaisId)
@@ -130,24 +98,16 @@ namespace InventarioInteligente.Infrastructure.Persistence
             {
                 e.ToTable("DetallesPedido");
                 e.HasKey(x => x.DetalleId);
-                e.Property(x => x.Cantidad).IsRequired();
                 e.Property(x => x.PrecioUnitario).HasColumnType("decimal(18,2)");
                 e.Property(x => x.Subtotal).HasColumnType("decimal(18,2)");
-                e.Property(x => x.Activo).HasDefaultValue(true);
-                e.Property(x => x.FechaCreacion).HasColumnType("datetime2").HasDefaultValueSql("SYSUTCDATETIME()");
-                e.Property(x => x.FechaEdicion).HasColumnType("datetime2");
-                e.Property(x => x.FechaEliminacion).HasColumnType("datetime2");
-
                 e.HasOne(x => x.Pedido)
                  .WithMany(x => x.Detalles)
                  .HasForeignKey(x => x.PedidoId)
                  .OnDelete(DeleteBehavior.NoAction);
-
                 e.HasOne(x => x.Producto)
                  .WithMany(x => x.Detalles)
                  .HasForeignKey(x => x.ProductoId)
                  .OnDelete(DeleteBehavior.NoAction);
-
                 e.ToTable(t =>
                 {
                     t.HasCheckConstraint("CK_Detalles_Cantidad_Positive", "[Cantidad] > 0");
@@ -163,17 +123,9 @@ namespace InventarioInteligente.Infrastructure.Persistence
                 e.Property(x => x.Nombre).HasColumnType("varchar(100)").IsRequired();
                 e.Property(x => x.Tipo).HasColumnType("varchar(10)").IsRequired();
                 e.Property(x => x.Valor).HasColumnType("decimal(18,2)");
-                e.Property(x => x.MinimoSubtotal).HasColumnType("decimal(18,2)").HasDefaultValue(0);
-                e.Property(x => x.Activo).HasDefaultValue(true);
-                e.Property(x => x.FechaCreacion).HasColumnType("datetime2").HasDefaultValueSql("SYSUTCDATETIME()");
-                e.Property(x => x.FechaEdicion).HasColumnType("datetime2");
-                e.Property(x => x.FechaEliminacion).HasColumnType("datetime2");
-
                 e.ToTable(t =>
                 {
                     t.HasCheckConstraint("CK_Reglas_Tipo", "[Tipo] IN ('Porcentaje','Fijo')");
-                    t.HasCheckConstraint("CK_Reglas_Valor_NonNegative", "[Valor] >= 0");
-                    t.HasCheckConstraint("CK_Reglas_MinimoSubtotal_NonNegative", "[MinimoSubtotal] >= 0");
                 });
             });
         }

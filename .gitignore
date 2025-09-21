@@ -46,3 +46,6 @@ out/
 /artifacts/
 /coverage/
 /test-results/
+
+#environment variables
+.env

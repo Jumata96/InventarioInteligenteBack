@@ -1,10 +1,10 @@
-using InventarioInteligente.Application.Interfaces;
-using InventarioInteligente.Domain.Entities;
-using InventarioInteligente.DTOs;
-using InventarioInteligente.Infrastructure.Persistence;
+using InventarioInteligenteBack.Application.Interfaces;
+using InventarioInteligenteBack.Domain.Entities;
+using InventarioInteligenteBack.Api.DTOs;
+using InventarioInteligenteBack.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace InventarioInteligente.Application.Services
+namespace InventarioInteligenteBack.Application.Services
 {
     public class ProductoService : IProductoService
     {
