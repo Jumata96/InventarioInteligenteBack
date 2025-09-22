@@ -42,6 +42,15 @@ builder.Services.AddScoped<
     InventarioInteligenteBack.Application.Interfaces.IProductoService,
     InventarioInteligenteBack.Application.Services.ProductoService>();
 
+builder.Services.AddScoped<
+    InventarioInteligenteBack.Application.Interfaces.IClienteService,
+    InventarioInteligenteBack.Application.Services.ClienteService>();
+
+builder.Services.AddScoped<
+    InventarioInteligenteBack.Application.Interfaces.IPaisService,
+    InventarioInteligenteBack.Application.Services.PaisService>();
+
+
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 
