@@ -1,15 +1,22 @@
 namespace InventarioInteligenteBack.Api.DTOs
 {
-    public record DetallePedidoDto(
+    public record DetallePedidoCreateDto(
         int ProductoId,
-        int Cantidad,
-        decimal PrecioUnitario
+        int Cantidad
     );
 
     public record PedidoCreateDto(
         int ClienteId,
         int PaisId,
-        List<DetallePedidoDto> Detalles
+        List<DetallePedidoCreateDto> Detalles
+    );
+
+    public record DetallePedidoReadDto(
+        int ProductoId,
+        string ProductoNombre,
+        int Cantidad,
+        decimal PrecioUnitario,
+        decimal Subtotal
     );
 
     public record PedidoReadDto(
@@ -21,6 +28,6 @@ namespace InventarioInteligenteBack.Api.DTOs
         decimal Impuesto,
         decimal Total,
         string Estado,
-        List<DetallePedidoDto> Detalles
+        List<DetallePedidoReadDto> Detalles
     );
 }
