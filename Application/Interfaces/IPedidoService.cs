@@ -12,5 +12,7 @@ namespace InventarioInteligenteBack.Application.Interfaces
 
         // Crear un pedido nuevo
         Task<PedidoReadDto> CreateAsync(PedidoCreateDto dto, string usuarioId);
+        Task<(decimal Subtotal, decimal Descuento, decimal Total)> CalcularDescuentoAsync(PedidoCreateDto dto);
+
     }
 }

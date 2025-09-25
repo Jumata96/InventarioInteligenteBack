@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "kDD3VvtXqDA=",
+  "dgSpecHash": "FkG6MUsBRfM=",
   "success": true,
   "projectFilePath": "/Users/julinhomazuelostauma/Documents/InventarioInteligente/InventarioInteligenteBack/InventarioInteligenteBack.csproj",
   "expectedPackageFiles": [
@@ -59,6 +59,7 @@
     "/Users/julinhomazuelostauma/.nuget/packages/microsoft.win32.systemevents/6.0.0/microsoft.win32.systemevents.6.0.0.nupkg.sha512",
     "/Users/julinhomazuelostauma/.nuget/packages/mono.texttemplating/3.0.0/mono.texttemplating.3.0.0.nupkg.sha512",
     "/Users/julinhomazuelostauma/.nuget/packages/netstandard.library/1.6.1/netstandard.library.1.6.1.nupkg.sha512",
+    "/Users/julinhomazuelostauma/.nuget/packages/questpdf/2024.3.0/questpdf.2024.3.0.nupkg.sha512",
     "/Users/julinhomazuelostauma/.nuget/packages/runtime.debian.8-x64.runtime.native.system.security.cryptography.openssl/4.3.2/runtime.debian.8-x64.runtime.native.system.security.cryptography.openssl.4.3.2.nupkg.sha512",
     "/Users/julinhomazuelostauma/.nuget/packages/runtime.fedora.23-x64.runtime.native.system.security.cryptography.openssl/4.3.2/runtime.fedora.23-x64.runtime.native.system.security.cryptography.openssl.4.3.2.nupkg.sha512",
     "/Users/julinhomazuelostauma/.nuget/packages/runtime.fedora.24-x64.runtime.native.system.security.cryptography.openssl/4.3.2/runtime.fedora.24-x64.runtime.native.system.security.cryptography.openssl.4.3.2.nupkg.sha512",

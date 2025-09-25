@@ -1,6 +1,8 @@
 using DotNetEnv;
 using InventarioInteligenteBack.Infrastructure.Identity;
 using InventarioInteligenteBack.Infrastructure.Persistence;
+using InventarioInteligenteBack.Application.Interfaces;
+using InventarioInteligenteBack.Application.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -17,7 +19,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend",
         policy =>
         {
-            policy.WithOrigins("http://localhost:5173")  
+            policy.WithOrigins("http://localhost:5173")
                   .AllowAnyHeader()
                   .AllowAnyMethod()
                   .AllowCredentials();
@@ -90,6 +92,11 @@ builder.Services.AddScoped<
     InventarioInteligenteBack.Application.Interfaces.IImpuestoService,
     InventarioInteligenteBack.Application.Services.ImpuestoService>();
 
+builder.Services.AddScoped<IDescuentoService, DescuentoService>();
+builder.Services.AddScoped<IPedidoService, PedidoService>();
+
+builder.Services.AddScoped<IFacturaPdfService, FacturaPdfService>();
+builder.Services.AddScoped<IFacturaService, FacturaService>();
 // 5. API y controladores
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();

@@ -69,6 +69,10 @@
             "Microsoft.EntityFrameworkCore.SqlServer": {
               "target": "Package",
               "version": "[9.0.9, )"
+            },
+            "QuestPDF": {
+              "target": "Package",
+              "version": "[2024.3.0, )"
             }
           },
           "imports": [

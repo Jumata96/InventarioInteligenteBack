@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace InventarioInteligenteBack.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250924203905_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250925191733_AddFacturasTable")]
+    partial class AddFacturasTable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -122,6 +122,58 @@ namespace InventarioInteligenteBack.Infrastructure.Persistence.Migrations
 
                             t.HasCheckConstraint("CK_Detalles_PrecioUnitario_Positive", "[PrecioUnitario] > 0");
                         });
+                });
+
+            modelBuilder.Entity("InventarioInteligenteBack.Domain.Entities.Factura", b =>
+                {
+                    b.Property<int>("FacturaId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("FacturaId"));
+
+                    b.Property<decimal>("Descuento")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("FechaEdicion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("FechaEmision")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("Impuesto")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("NumeroFactura")
+                        .IsRequired()
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<int>("PedidoId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Subtotal")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("Total")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("UrlPdf")
+                        .IsRequired()
+                        .HasColumnType("varchar(300)");
+
+                    b.HasKey("FacturaId");
+
+                    b.HasIndex("PedidoId")
+                        .IsUnique();
+
+                    b.ToTable("Facturas", (string)null);
                 });
 
             modelBuilder.Entity("InventarioInteligenteBack.Domain.Entities.Impuesto", b =>
@@ -249,6 +301,9 @@ namespace InventarioInteligenteBack.Infrastructure.Persistence.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("Total")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TotalFinal")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("UsuarioId")
@@ -582,6 +637,17 @@ namespace InventarioInteligenteBack.Infrastructure.Persistence.Migrations
                     b.Navigation("Producto");
                 });
 
+            modelBuilder.Entity("InventarioInteligenteBack.Domain.Entities.Factura", b =>
+                {
+                    b.HasOne("InventarioInteligenteBack.Domain.Entities.Pedido", "Pedido")
+                        .WithOne("Factura")
+                        .HasForeignKey("InventarioInteligenteBack.Domain.Entities.Factura", "PedidoId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Pedido");
+                });
+
             modelBuilder.Entity("InventarioInteligenteBack.Domain.Entities.Impuesto", b =>
                 {
                     b.HasOne("InventarioInteligenteBack.Domain.Entities.Pais", "Pais")
@@ -681,6 +747,8 @@ namespace InventarioInteligenteBack.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("InventarioInteligenteBack.Domain.Entities.Pedido", b =>
                 {
                     b.Navigation("Detalles");
+
+                    b.Navigation("Factura");
                 });
 
             modelBuilder.Entity("InventarioInteligenteBack.Domain.Entities.Producto", b =>

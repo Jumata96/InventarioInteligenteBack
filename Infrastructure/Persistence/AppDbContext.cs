@@ -16,10 +16,11 @@ namespace InventarioInteligenteBack.Infrastructure.Persistence
         public DbSet<Pedido> Pedidos => Set<Pedido>();
         public DbSet<DetallePedido> DetallesPedido => Set<DetallePedido>();
         public DbSet<ReglaDescuento> ReglasDescuento => Set<ReglaDescuento>();
+        public DbSet<Factura> Facturas => Set<Factura>(); // ✅ Nuevo DbSet
 
         protected override void OnModelCreating(ModelBuilder mb)
         {
-            base.OnModelCreating(mb); // ⚠️ Esto ahora incluye las tablas de Identity
+            base.OnModelCreating(mb); // ⚠️ Incluye las tablas de Identity
 
             // ===== Paises =====
             mb.Entity<Pais>(e =>
@@ -83,6 +84,7 @@ namespace InventarioInteligenteBack.Infrastructure.Persistence
                 e.Property(x => x.Estado).HasColumnType("varchar(20)").HasDefaultValue("Emitido");
                 e.Property(x => x.Subtotal).HasColumnType("decimal(18,2)");
                 e.Property(x => x.Total).HasColumnType("decimal(18,2)");
+                e.Property(x => x.TotalFinal).HasColumnType("decimal(18,2)");
                 e.HasOne(x => x.Cliente)
                  .WithMany()
                  .HasForeignKey(x => x.ClienteId)
@@ -127,6 +129,23 @@ namespace InventarioInteligenteBack.Infrastructure.Persistence
                 {
                     t.HasCheckConstraint("CK_Reglas_Tipo", "[Tipo] IN ('Porcentaje','Fijo')");
                 });
+            });
+
+            // ===== Facturas =====
+            mb.Entity<Factura>(e =>
+            {
+                e.ToTable("Facturas");
+                e.HasKey(x => x.FacturaId);
+                e.Property(x => x.NumeroFactura).HasColumnType("varchar(30)").IsRequired();
+                e.Property(x => x.Subtotal).HasColumnType("decimal(18,2)");
+                e.Property(x => x.Descuento).HasColumnType("decimal(18,2)");
+                e.Property(x => x.Impuesto).HasColumnType("decimal(18,2)");
+                e.Property(x => x.Total).HasColumnType("decimal(18,2)");
+                e.Property(x => x.UrlPdf).HasColumnType("varchar(300)");
+                e.HasOne(f => f.Pedido)
+                    .WithOne(p => p.Factura)
+                    .HasForeignKey<Factura>(f => f.PedidoId)
+                    .OnDelete(DeleteBehavior.NoAction);
             });
         }
     }

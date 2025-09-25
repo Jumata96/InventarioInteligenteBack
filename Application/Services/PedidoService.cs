@@ -9,7 +9,13 @@ namespace InventarioInteligenteBack.Application.Services
     public class PedidoService : IPedidoService
     {
         private readonly AppDbContext _db;
-        public PedidoService(AppDbContext db) => _db = db;
+        private readonly IDescuentoService _descuentoService;
+
+        public PedidoService(AppDbContext db, IDescuentoService descuentoService)
+        {
+            _db = db;
+            _descuentoService = descuentoService;
+        }
 
         public async Task<IEnumerable<PedidoReadDto>> GetAllAsync()
         {
@@ -24,6 +30,7 @@ namespace InventarioInteligenteBack.Application.Services
                     p.Descuento,
                     p.Impuesto,
                     p.Total,
+                    p.TotalFinal,
                     p.Estado,
                     p.Detalles.Select(d =>
                         new DetallePedidoReadDto(
@@ -55,6 +62,7 @@ namespace InventarioInteligenteBack.Application.Services
                 p.Descuento,
                 p.Impuesto,
                 p.Total,
+                p.TotalFinal,
                 p.Estado,
                 p.Detalles.Select(d =>
                     new DetallePedidoReadDto(
@@ -96,11 +104,12 @@ namespace InventarioInteligenteBack.Application.Services
                     PaisId = dto.PaisId,
                     UsuarioId = usuarioId,
                     Fecha = DateTime.UtcNow,
-                    Estado = "Emitido", 
+                    Estado = "Emitido",
                     FechaCreacion = DateTime.UtcNow
                 };
 
                 decimal subtotal = 0;
+                int cantidadTotal = 0;
 
                 foreach (var d in dto.Detalles)
                 {
@@ -124,6 +133,7 @@ namespace InventarioInteligenteBack.Application.Services
                     };
 
                     subtotal += detalle.Subtotal;
+                    cantidadTotal += d.Cantidad;
                     pedido.Detalles.Add(detalle);
 
                     // Descontar stock
@@ -132,16 +142,23 @@ namespace InventarioInteligenteBack.Application.Services
 
                 pedido.Subtotal = subtotal;
 
-                // Impuesto: usar el primero activo del país
-                var impuesto = await _db.Impuestos
+                // ✅ Calcular descuento con el servicio inyectado
+                pedido.Descuento = _descuentoService.CalcularDescuento(subtotal, cantidadTotal);
+
+                // ✅ Impuesto
+                var impuestoPorcentaje = await _db.Impuestos
                     .Where(i => i.PaisId == dto.PaisId && i.Estado == 1)
                     .Select(i => i.Porcentaje)
                     .FirstOrDefaultAsync();
 
-                pedido.Impuesto = subtotal * (impuesto / 100);
-                pedido.Total = pedido.Subtotal - pedido.Descuento + pedido.Impuesto;
+                var baseImponible = subtotal - pedido.Descuento;
+                pedido.Impuesto = baseImponible * (impuestoPorcentaje / 100m);
 
-                if (pedido.Total < 0)
+                // ✅ Totales
+                pedido.Total = subtotal; // referencia al bruto
+                pedido.TotalFinal = baseImponible + pedido.Impuesto;
+
+                if (pedido.TotalFinal < 0)
                     throw new InvalidOperationException("El total del pedido no puede ser negativo.");
 
                 _db.Pedidos.Add(pedido);
@@ -157,6 +174,7 @@ namespace InventarioInteligenteBack.Application.Services
                     pedido.Descuento,
                     pedido.Impuesto,
                     pedido.Total,
+                    pedido.TotalFinal,
                     pedido.Estado,
                     pedido.Detalles.Select(d =>
                         new DetallePedidoReadDto(
@@ -174,6 +192,28 @@ namespace InventarioInteligenteBack.Application.Services
                 await transaction.RollbackAsync();
                 throw;
             }
+        }
+
+        // ✅ Método para la vista: calcular descuento dinámicamente sin crear pedido
+        public async Task<(decimal Subtotal, decimal Descuento, decimal Total)> CalcularDescuentoAsync(PedidoCreateDto dto)
+        {
+            decimal subtotal = 0;
+            int totalUnidades = 0;
+
+            foreach (var d in dto.Detalles)
+            {
+                var producto = await _db.Productos.FirstOrDefaultAsync(p => p.ProductoId == d.ProductoId);
+                if (producto == null)
+                    throw new KeyNotFoundException($"Producto {d.ProductoId} no existe");
+
+                subtotal += producto.Precio * d.Cantidad;
+                totalUnidades += d.Cantidad;
+            }
+
+            var descuento = _descuentoService.CalcularDescuento(subtotal, totalUnidades);
+            var total = subtotal - descuento;
+
+            return (subtotal, descuento, total);
         }
     }
 }

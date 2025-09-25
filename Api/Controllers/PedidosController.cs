@@ -12,10 +12,12 @@ namespace InventarioInteligenteBack.Api.Controllers
     public class PedidosController : ControllerBase
     {
         private readonly IPedidoService _service;
+        private readonly IDescuentoService _descuentoService;
 
-        public PedidosController(IPedidoService service)
+        public PedidosController(IPedidoService service, IDescuentoService descuentoService)
         {
             _service = service;
+            _descuentoService = descuentoService;
         }
 
         // GET: api/Pedidos
@@ -48,5 +50,24 @@ namespace InventarioInteligenteBack.Api.Controllers
 
             return CreatedAtAction(nameof(GetById), new { id = created.PedidoId }, created);
         }
+
+        // POST: api/Pedidos/calcular-descuento
+        [HttpPost("calcular-descuento")]
+        public async Task<IActionResult> CalcularDescuento([FromBody] PedidoCreateDto dto)
+        {
+            if (dto.Detalles == null || !dto.Detalles.Any())
+                return BadRequest("Debe enviar al menos un producto");
+
+            var result = await _service.CalcularDescuentoAsync(dto);
+
+            return Ok(new
+            {
+                Subtotal = result.Subtotal,
+                Descuento = result.Descuento,
+                Total = result.Total
+            });
+        }
+
+
     }
 }

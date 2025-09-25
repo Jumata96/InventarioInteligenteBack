@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace InventarioInteligenteBack.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class IdentityInit : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -282,6 +282,7 @@ namespace InventarioInteligenteBack.Infrastructure.Persistence.Migrations
                     Descuento = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     Impuesto = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     Total = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    TotalFinal = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     Secuencial = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Estado = table.Column<string>(type: "varchar(20)", nullable: false, defaultValue: "Emitido"),
                     Activo = table.Column<bool>(type: "bit", nullable: false),

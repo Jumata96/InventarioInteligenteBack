@@ -27,6 +27,7 @@ namespace InventarioInteligenteBack.Api.DTOs
         decimal Descuento,
         decimal Impuesto,
         decimal Total,
+        decimal TotalFinal,
         string Estado,
         List<DetallePedidoReadDto> Detalles
     );

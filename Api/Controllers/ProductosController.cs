@@ -50,7 +50,7 @@ namespace InventarioInteligenteBack.Api.Controllers
         {
             var result = await _service.GetPagedAsync(page, pageSize, q);
             return Ok(result);
-        }   
+        }
 
         [HttpPatch("{id}/enable")]
         public async Task<IActionResult> Enable(int id)
@@ -65,5 +65,6 @@ namespace InventarioInteligenteBack.Api.Controllers
             var ok = await _service.DisableAsync(id);
             return ok ? NoContent() : NotFound();
         }
+        
     }
 }
