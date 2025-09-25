@@ -38,8 +38,22 @@ namespace InventarioInteligenteBack.Api.Controllers
         [HttpGet("pedido/{pedidoId}")]
         public async Task<IActionResult> GetByPedido(int pedidoId)
         {
+            Console.WriteLine($"➡️ [FacturasController] GET /api/Facturas/pedido/{pedidoId}");
+
             var factura = await _facturaService.GetByPedidoAsync(pedidoId);
-            if (factura == null) return NotFound();
+
+            if (factura == null)
+            {
+                Console.WriteLine($"⚠️ No había factura para PedidoId={pedidoId}, generando nueva...");
+                factura = await _facturaService.EmitirFacturaAsync(pedidoId);
+                if (factura == null)
+                {
+                    Console.WriteLine($"❌ No se pudo generar factura para PedidoId={pedidoId}");
+                    return NotFound();
+                }
+            }
+
+            Console.WriteLine($"📄 Devolviendo factura {factura.NumeroFactura} con PDF={factura.UrlPdf}");
             return Ok(factura);
         }
 

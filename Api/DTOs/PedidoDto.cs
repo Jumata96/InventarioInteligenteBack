@@ -22,7 +22,9 @@ namespace InventarioInteligenteBack.Api.DTOs
     public record PedidoReadDto(
         int PedidoId,
         int ClienteId,
+        string ClienteNombre,
         int PaisId,
+        string PaisNombre,
         decimal Subtotal,
         decimal Descuento,
         decimal Impuesto,

@@ -17,21 +17,26 @@ namespace InventarioInteligenteBack.Application.Services
             _descuentoService = descuentoService;
         }
 
+        // ✅ Listar todos (sin paginar, solo para compatibilidad)
         public async Task<IEnumerable<PedidoReadDto>> GetAllAsync()
         {
             return await _db.Pedidos
-                .Include(p => p.Detalles)
-                .ThenInclude(d => d.Producto)
+                .Include(p => p.Detalles).ThenInclude(d => d.Producto)
+                .Include(p => p.Cliente)
+                .Include(p => p.Pais)
+                .Include(p => p.Factura)
                 .Select(p => new PedidoReadDto(
                     p.PedidoId,
                     p.ClienteId,
+                    p.Cliente.Nombre,
                     p.PaisId,
+                    p.Pais.Nombre,
                     p.Subtotal,
                     p.Descuento,
                     p.Impuesto,
                     p.Total,
                     p.TotalFinal,
-                    p.Estado,
+                    p.Factura != null ? "Facturado" : "Pendiente",
                     p.Detalles.Select(d =>
                         new DetallePedidoReadDto(
                             d.ProductoId,
@@ -45,11 +50,67 @@ namespace InventarioInteligenteBack.Application.Services
                 .ToListAsync();
         }
 
+        // ✅ Paginación + filtro
+        public async Task<(IEnumerable<PedidoReadDto> Data, int TotalCount)> GetPagedAsync(
+            int page, int pageSize, string? query)
+        {
+            var pedidosQuery = _db.Pedidos
+                .Include(p => p.Detalles).ThenInclude(d => d.Producto)
+                .Include(p => p.Cliente)
+                .Include(p => p.Pais)
+                .Include(p => p.Factura)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                var qLower = query.ToLower();
+                pedidosQuery = pedidosQuery.Where(p =>
+                    p.Cliente.Nombre.ToLower().Contains(qLower) ||
+                    p.Pais.Nombre.ToLower().Contains(qLower));
+            }
+
+            var totalCount = await pedidosQuery.CountAsync();
+
+            var pedidos = await pedidosQuery
+                .OrderByDescending(p => p.PedidoId)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var data = pedidos.Select(p => new PedidoReadDto(
+                p.PedidoId,
+                p.ClienteId,
+                p.Cliente.Nombre,
+                p.PaisId,
+                p.Pais.Nombre,
+                p.Subtotal,
+                p.Descuento,
+                p.Impuesto,
+                p.Total,
+                p.TotalFinal,
+                p.Factura != null ? "Facturado" : "Pendiente",
+                p.Detalles.Select(d =>
+                    new DetallePedidoReadDto(
+                        d.ProductoId,
+                        d.Producto.Nombre,
+                        d.Cantidad,
+                        d.PrecioUnitario,
+                        d.Subtotal
+                    )
+                ).ToList()
+            ));
+
+            return (data, totalCount);
+        }
+
+        // ✅ Obtener por ID
         public async Task<PedidoReadDto?> GetByIdAsync(int id)
         {
             var p = await _db.Pedidos
-                .Include(p => p.Detalles)
-                .ThenInclude(d => d.Producto)
+                .Include(p => p.Detalles).ThenInclude(d => d.Producto)
+                .Include(p => p.Cliente)
+                .Include(p => p.Pais)
+                .Include(p => p.Factura)
                 .FirstOrDefaultAsync(x => x.PedidoId == id);
 
             if (p == null) return null;
@@ -57,13 +118,15 @@ namespace InventarioInteligenteBack.Application.Services
             return new PedidoReadDto(
                 p.PedidoId,
                 p.ClienteId,
+                p.Cliente.Nombre,
                 p.PaisId,
+                p.Pais.Nombre,
                 p.Subtotal,
                 p.Descuento,
                 p.Impuesto,
                 p.Total,
                 p.TotalFinal,
-                p.Estado,
+                p.Factura != null ? "Facturado" : "Pendiente",
                 p.Detalles.Select(d =>
                     new DetallePedidoReadDto(
                         d.ProductoId,
@@ -76,6 +139,7 @@ namespace InventarioInteligenteBack.Application.Services
             );
         }
 
+        // ✅ Crear pedido
         public async Task<PedidoReadDto> CreateAsync(PedidoCreateDto dto, string usuarioId)
         {
             if (dto == null)
@@ -88,12 +152,10 @@ namespace InventarioInteligenteBack.Application.Services
 
             try
             {
-                // Validar Cliente
                 var cliente = await _db.Clientes.FindAsync(dto.ClienteId);
                 if (cliente == null)
                     throw new KeyNotFoundException("Cliente no existe");
 
-                // Validar País
                 var pais = await _db.Paises.FindAsync(dto.PaisId);
                 if (pais == null)
                     throw new KeyNotFoundException("País no existe");
@@ -136,16 +198,12 @@ namespace InventarioInteligenteBack.Application.Services
                     cantidadTotal += d.Cantidad;
                     pedido.Detalles.Add(detalle);
 
-                    // Descontar stock
-                    producto.Stock -= d.Cantidad;
+                    producto.Stock -= d.Cantidad; // actualizar stock
                 }
 
                 pedido.Subtotal = subtotal;
-
-                // ✅ Calcular descuento con el servicio inyectado
                 pedido.Descuento = _descuentoService.CalcularDescuento(subtotal, cantidadTotal);
 
-                // ✅ Impuesto
                 var impuestoPorcentaje = await _db.Impuestos
                     .Where(i => i.PaisId == dto.PaisId && i.Estado == 1)
                     .Select(i => i.Porcentaje)
@@ -154,8 +212,7 @@ namespace InventarioInteligenteBack.Application.Services
                 var baseImponible = subtotal - pedido.Descuento;
                 pedido.Impuesto = baseImponible * (impuestoPorcentaje / 100m);
 
-                // ✅ Totales
-                pedido.Total = subtotal; // referencia al bruto
+                pedido.Total = subtotal;
                 pedido.TotalFinal = baseImponible + pedido.Impuesto;
 
                 if (pedido.TotalFinal < 0)
@@ -169,13 +226,15 @@ namespace InventarioInteligenteBack.Application.Services
                 return new PedidoReadDto(
                     pedido.PedidoId,
                     pedido.ClienteId,
+                    cliente.Nombre,
                     pedido.PaisId,
+                    pais.Nombre,
                     pedido.Subtotal,
                     pedido.Descuento,
                     pedido.Impuesto,
                     pedido.Total,
                     pedido.TotalFinal,
-                    pedido.Estado,
+                    pedido.Factura != null ? "Facturado" : "Pendiente",
                     pedido.Detalles.Select(d =>
                         new DetallePedidoReadDto(
                             d.ProductoId,
@@ -194,7 +253,7 @@ namespace InventarioInteligenteBack.Application.Services
             }
         }
 
-        // ✅ Método para la vista: calcular descuento dinámicamente sin crear pedido
+        // ✅ Calcular descuento sin crear pedido
         public async Task<(decimal Subtotal, decimal Descuento, decimal Total)> CalcularDescuentoAsync(PedidoCreateDto dto)
         {
             decimal subtotal = 0;

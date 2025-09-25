@@ -7,12 +7,16 @@ namespace InventarioInteligenteBack.Application.Interfaces
         // Listar todos los pedidos
         Task<IEnumerable<PedidoReadDto>> GetAllAsync();
 
+        // Obtener pedidos paginados con filtro
+        Task<(IEnumerable<PedidoReadDto> Data, int TotalCount)> GetPagedAsync(int page, int pageSize, string? query);
+
         // Obtener un pedido específico por ID
         Task<PedidoReadDto?> GetByIdAsync(int id);
 
         // Crear un pedido nuevo
         Task<PedidoReadDto> CreateAsync(PedidoCreateDto dto, string usuarioId);
-        Task<(decimal Subtotal, decimal Descuento, decimal Total)> CalcularDescuentoAsync(PedidoCreateDto dto);
 
+        // Calcular descuento sin crear pedido
+        Task<(decimal Subtotal, decimal Descuento, decimal Total)> CalcularDescuentoAsync(PedidoCreateDto dto);
     }
 }

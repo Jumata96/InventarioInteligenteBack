@@ -7,9 +7,17 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.AspNetCore.StaticFiles;
+using QuestPDF.Infrastructure;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ⚡ Configurar licencia de QuestPDF
+QuestPDF.Settings.License = LicenseType.Community;
+
+// Cargar variables de entorno
 Env.Load();
 builder.Configuration.AddEnvironmentVariables();
 
@@ -26,7 +34,6 @@ builder.Services.AddCors(options =>
         });
 });
 
-
 // 1. Conexión a BD
 var connectionString = Env.GetString("CONNECTIONSTRINGS__DEFAULT");
 builder.Services.AddDbContext<AppDbContext>(opt =>
@@ -35,19 +42,16 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
 // 2. Identity
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
 {
-    // Reglas de contraseña
     options.Password.RequireDigit = true;
     options.Password.RequireUppercase = true;
     options.Password.RequireLowercase = true;
-    options.Password.RequireNonAlphanumeric = true; // caracter especial
+    options.Password.RequireNonAlphanumeric = true;
     options.Password.RequiredLength = 8;
 
-    // Bloqueo de cuenta
     options.Lockout.MaxFailedAccessAttempts = 5;
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
     options.Lockout.AllowedForNewUsers = true;
 
-    // Reglas de usuario
     options.User.RequireUniqueEmail = true;
 });
 builder.Services.AddIdentityCore<ApplicationUser>()
@@ -55,8 +59,8 @@ builder.Services.AddIdentityCore<ApplicationUser>()
     .AddSignInManager()
     .AddDefaultTokenProviders();
 
-// 3. Configuración JWT simple
-var jwtKey = builder.Configuration["JWT:KEY"] ?? "claveSuperSecreta1234567890123456"; // fallback
+// 3. Configuración JWT
+var jwtKey = builder.Configuration["JWT:KEY"] ?? "claveSuperSecreta1234567890123456";
 var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -72,37 +76,20 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 // 4. Registro de servicios de aplicación
-builder.Services.AddScoped<
-    InventarioInteligenteBack.Application.Interfaces.IProductoService,
-    InventarioInteligenteBack.Application.Services.ProductoService>();
-
-builder.Services.AddScoped<
-    InventarioInteligenteBack.Application.Interfaces.IClienteService,
-    InventarioInteligenteBack.Application.Services.ClienteService>();
-
-builder.Services.AddScoped<
-    InventarioInteligenteBack.Application.Interfaces.IPaisService,
-    InventarioInteligenteBack.Application.Services.PaisService>();
-
-builder.Services.AddScoped<
-    InventarioInteligenteBack.Application.Interfaces.IPedidoService,
-    InventarioInteligenteBack.Application.Services.PedidoService>();
-
-builder.Services.AddScoped<
-    InventarioInteligenteBack.Application.Interfaces.IImpuestoService,
-    InventarioInteligenteBack.Application.Services.ImpuestoService>();
-
-builder.Services.AddScoped<IDescuentoService, DescuentoService>();
+builder.Services.AddScoped<IProductoService, ProductoService>();
+builder.Services.AddScoped<IClienteService, ClienteService>();
+builder.Services.AddScoped<IPaisService, PaisService>();
 builder.Services.AddScoped<IPedidoService, PedidoService>();
-
+builder.Services.AddScoped<IImpuestoService, ImpuestoService>();
+builder.Services.AddScoped<IDescuentoService, DescuentoService>();
 builder.Services.AddScoped<IFacturaPdfService, FacturaPdfService>();
 builder.Services.AddScoped<IFacturaService, FacturaService>();
+
 // 5. API y controladores
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 
 var app = builder.Build();
-
 
 // 👇 Habilitar CORS
 app.UseCors("AllowFrontend");
@@ -113,7 +100,31 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseAuthentication(); // 👈 Importante: antes de Authorization
+
+// 👇 Crear carpeta de facturas si no existe
+var facturasPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "storage", "facturas");
+if (!Directory.Exists(facturasPath))
+    Directory.CreateDirectory(facturasPath);
+
+// 👇 Configurar content-type provider (PDF asegurado)
+var provider = new FileExtensionContentTypeProvider();
+provider.Mappings[".pdf"] = "application/pdf";
+
+// 👇 Archivos estáticos (todo wwwroot)
+app.UseStaticFiles();
+
+// 👇 Archivos estáticos para facturas, con MIME forzado
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(facturasPath),
+    RequestPath = "/storage/facturas",
+    ContentTypeProvider = provider,
+    ServeUnknownFileTypes = true
+});
+
+// 👇 Autenticación y autorización
+app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
 app.Run();

@@ -31,7 +31,7 @@ namespace InventarioInteligenteBack.Application.Services
             if (await _db.Facturas.AnyAsync(f => f.PedidoId == pedidoId))
                 throw new InvalidOperationException("El pedido ya tiene factura");
 
-            var numeroFactura = $"F-{DateTime.UtcNow:yyyyMMddHHmmss}";
+            var numeroFactura = $"F{DateTime.UtcNow:yyyyMMddHHmmss}";
 
             var factura = new Factura
             {
@@ -69,10 +69,18 @@ namespace InventarioInteligenteBack.Application.Services
 
         public async Task<FacturaReadDto?> GetByPedidoAsync(int pedidoId)
         {
-            var factura = await _db.Facturas
-                .FirstOrDefaultAsync(f => f.PedidoId == pedidoId);
+            Console.WriteLine($"🔍 [FacturaService] Buscando factura para PedidoId={pedidoId}");
 
-            return factura == null ? null : MapToDto(factura);
+            var factura = await _db.Facturas.FirstOrDefaultAsync(f => f.PedidoId == pedidoId);
+
+            if (factura == null)
+            {
+                Console.WriteLine($"⚠️ [FacturaService] No se encontró factura para PedidoId={pedidoId}");
+                return null;
+            }
+
+            Console.WriteLine($"✅ [FacturaService] Factura encontrada: {factura.NumeroFactura}, UrlPdf={factura.UrlPdf}");
+            return MapToDto(factura);
         }
 
         public async Task<FacturaReadDto?> GetByIdAsync(int id)

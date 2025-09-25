@@ -28,6 +28,14 @@ namespace InventarioInteligenteBack.Api.Controllers
             return Ok(pedidos);
         }
 
+        // GET: api/Pedidos/paged?page=1&pageSize=10&q=texto
+        [HttpGet("paged")]
+        public async Task<IActionResult> GetPaged([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? q = "")
+        {
+            var (data, totalCount) = await _service.GetPagedAsync(page, pageSize, q);
+            return Ok(new { data, totalCount });
+        }
+
         // GET: api/Pedidos/5
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
@@ -67,7 +75,5 @@ namespace InventarioInteligenteBack.Api.Controllers
                 Total = result.Total
             });
         }
-
-
     }
 }
