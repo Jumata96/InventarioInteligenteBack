@@ -38,5 +38,30 @@ namespace InventarioInteligenteBack.Api.Controllers
             var result = await _service.DeleteAsync(id);
             return result ? NoContent() : NotFound();
         }
+        [HttpGet("paged")]
+        public async Task<IActionResult> GetPaged([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        {
+            var (data, totalCount) = await _service.GetPagedAsync(page, pageSize);
+            return Ok(new { data, totalCount });
+        }
+        [HttpPatch("{id}/enable")]
+        public async Task<IActionResult> Enable(int id)
+        {
+            var ok = await _service.EnableAsync(id);
+            return ok ? NoContent() : NotFound();
+        }
+
+        [HttpPatch("{id}/disable")]
+        public async Task<IActionResult> Disable(int id)
+        {
+            var ok = await _service.DisableAsync(id);
+            return ok ? NoContent() : NotFound();
+        } 
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] ClienteUpdateDto dto)
+        {
+            var ok = await _service.UpdateAsync(id, dto);
+            return ok ? NoContent() : NotFound();
+        }
     }
 }

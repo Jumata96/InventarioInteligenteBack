@@ -8,7 +8,7 @@ namespace InventarioInteligenteBack.Domain.Entities
         public int Cantidad { get; set; }                  // > 0
         public decimal PrecioUnitario { get; set; }        // > 0
         public decimal Subtotal { get; set; }              // decimal(18,2)
-        public bool Activo { get; set; } = true;
+        public int Estado { get; set; } = 1;
         public DateTime FechaCreacion { get; set; }
         public DateTime? FechaEdicion { get; set; }
         public DateTime? FechaEliminacion { get; set; }

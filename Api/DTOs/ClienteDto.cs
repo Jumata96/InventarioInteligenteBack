@@ -16,7 +16,16 @@ namespace InventarioInteligenteBack.Api.DTOs
         string? Email,
         string? Telefono,
         string? Direccion,
+        string PaisNombre, 
         int PaisId,
-        bool Activo
+        int Estado
+    );
+    public record ClienteUpdateDto(
+        string Ruc,
+        string Nombre,
+        string? Email,
+        string? Telefono,
+        string? Direccion,
+        int PaisId
     );
 }

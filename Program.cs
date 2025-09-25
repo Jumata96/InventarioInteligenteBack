@@ -11,12 +11,43 @@ var builder = WebApplication.CreateBuilder(args);
 Env.Load();
 builder.Configuration.AddEnvironmentVariables();
 
+// 👇 Política de CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:5173")  
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        });
+});
+
+
 // 1. Conexión a BD
 var connectionString = Env.GetString("CONNECTIONSTRINGS__DEFAULT");
 builder.Services.AddDbContext<AppDbContext>(opt =>
     opt.UseSqlServer(connectionString));
 
 // 2. Identity
+builder.Services.AddIdentityCore<ApplicationUser>(options =>
+{
+    // Reglas de contraseña
+    options.Password.RequireDigit = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireNonAlphanumeric = true; // caracter especial
+    options.Password.RequiredLength = 8;
+
+    // Bloqueo de cuenta
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+    options.Lockout.AllowedForNewUsers = true;
+
+    // Reglas de usuario
+    options.User.RequireUniqueEmail = true;
+});
 builder.Services.AddIdentityCore<ApplicationUser>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddSignInManager()
@@ -59,6 +90,10 @@ builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 
 var app = builder.Build();
+
+
+// 👇 Habilitar CORS
+app.UseCors("AllowFrontend");
 
 if (app.Environment.IsDevelopment())
 {

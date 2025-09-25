@@ -70,82 +70,111 @@ namespace InventarioInteligenteBack.Application.Services
 
         public async Task<PedidoReadDto> CreateAsync(PedidoCreateDto dto, string usuarioId)
         {
-            // Validar Cliente
             var cliente = await _db.Clientes.FindAsync(dto.ClienteId);
-            if (cliente == null) throw new Exception("Cliente no existe");
+            if (dto == null)
+                throw new ArgumentNullException(nameof(dto));
 
-            // Validar País
-            var pais = await _db.Paises.FindAsync(dto.PaisId);
-            if (pais == null) throw new Exception("País no existe");
+            if (dto.Detalles == null || !dto.Detalles.Any())
+                throw new ArgumentException("El pedido debe contener al menos un detalle.");
 
-            var pedido = new Pedido
+            using var transaction = await _db.Database.BeginTransactionAsync();
+
+            try
             {
-                ClienteId = dto.ClienteId,
-                PaisId = dto.PaisId,
-                UsuarioId = usuarioId,
-                Fecha = DateTime.UtcNow,
-                Estado = "Emitido",
-                Activo = true,
-                FechaCreacion = DateTime.UtcNow
-            };
+                // Validar Cliente
+                var cliente = await _db.Clientes.FindAsync(dto.ClienteId);
+                if (cliente == null)
+                    throw new KeyNotFoundException("Cliente no existe");
 
-            decimal subtotal = 0;
+                // Validar País
+                var pais = await _db.Paises.FindAsync(dto.PaisId);
+                if (pais == null)
+                    throw new KeyNotFoundException("País no existe");
 
-            foreach (var d in dto.Detalles)
-            {
-                var producto = await _db.Productos.FindAsync(d.ProductoId);
-                if (producto == null) throw new Exception($"Producto {d.ProductoId} no existe");
-                if (producto.Stock < d.Cantidad) throw new Exception($"Stock insuficiente para {producto.Nombre}");
-
-                var detalle = new DetallePedido
+                var pedido = new Pedido
                 {
-                    ProductoId = d.ProductoId,
-                    Cantidad = d.Cantidad,
-                    PrecioUnitario = producto.Precio,
-                    Subtotal = producto.Precio * d.Cantidad,
+                    ClienteId = dto.ClienteId,
+                    PaisId = dto.PaisId,
+                    UsuarioId = usuarioId,
+                    Fecha = DateTime.UtcNow,
+                    Estado = "Emitido", 
                     FechaCreacion = DateTime.UtcNow
                 };
 
-                subtotal += detalle.Subtotal;
-                pedido.Detalles.Add(detalle);
+                decimal subtotal = 0;
 
-                // Descontar stock
-                producto.Stock -= d.Cantidad;
+                foreach (var d in dto.Detalles)
+                {
+                    if (d.Cantidad <= 0)
+                        throw new InvalidOperationException($"Cantidad inválida para el producto {d.ProductoId}");
+
+                    var producto = await _db.Productos.FindAsync(d.ProductoId);
+                    if (producto == null)
+                        throw new KeyNotFoundException($"Producto {d.ProductoId} no existe");
+
+                    if (producto.Stock < d.Cantidad)
+                        throw new InvalidOperationException($"Stock insuficiente para {producto.Nombre}. Disponible: {producto.Stock}");
+
+                    var detalle = new DetallePedido
+                    {
+                        ProductoId = d.ProductoId,
+                        Cantidad = d.Cantidad,
+                        PrecioUnitario = producto.Precio,
+                        Subtotal = producto.Precio * d.Cantidad,
+                        FechaCreacion = DateTime.UtcNow
+                    };
+
+                    subtotal += detalle.Subtotal;
+                    pedido.Detalles.Add(detalle);
+
+                    // Descontar stock
+                    producto.Stock -= d.Cantidad;
+                }
+
+                pedido.Subtotal = subtotal;
+
+                // Impuesto: usar el primero activo del país
+                var impuesto = await _db.Impuestos
+                    .Where(i => i.PaisId == dto.PaisId && i.Estado == 1)
+                    .Select(i => i.Porcentaje)
+                    .FirstOrDefaultAsync();
+
+                pedido.Impuesto = subtotal * (impuesto / 100);
+                pedido.Total = pedido.Subtotal - pedido.Descuento + pedido.Impuesto;
+
+                if (pedido.Total < 0)
+                    throw new InvalidOperationException("El total del pedido no puede ser negativo.");
+
+                _db.Pedidos.Add(pedido);
+                await _db.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+
+                return new PedidoReadDto(
+                    pedido.PedidoId,
+                    pedido.ClienteId,
+                    pedido.PaisId,
+                    pedido.Subtotal,
+                    pedido.Descuento,
+                    pedido.Impuesto,
+                    pedido.Total,
+                    pedido.Estado,
+                    pedido.Detalles.Select(d =>
+                        new DetallePedidoReadDto(
+                            d.ProductoId,
+                            d.Producto.Nombre,
+                            d.Cantidad,
+                            d.PrecioUnitario,
+                            d.Subtotal
+                        )
+                    ).ToList()
+                );
             }
-
-            pedido.Subtotal = subtotal;
-
-            // Impuesto: usar el primero activo del país
-            var impuesto = await _db.Impuestos
-                .Where(i => i.PaisId == dto.PaisId && i.Activo)
-                .Select(i => i.Porcentaje)
-                .FirstOrDefaultAsync();
-
-            pedido.Impuesto = subtotal * (impuesto / 100);
-            pedido.Total = pedido.Subtotal - pedido.Descuento + pedido.Impuesto;
-
-            _db.Pedidos.Add(pedido);
-            await _db.SaveChangesAsync();
-
-            return new PedidoReadDto(
-                pedido.PedidoId,
-                pedido.ClienteId,
-                pedido.PaisId,
-                pedido.Subtotal,
-                pedido.Descuento,
-                pedido.Impuesto,
-                pedido.Total,
-                pedido.Estado,
-                pedido.Detalles.Select(d =>
-                    new DetallePedidoReadDto(
-                        d.ProductoId,
-                        d.Producto.Nombre,
-                        d.Cantidad,
-                        d.PrecioUnitario,
-                        d.Subtotal
-                    )
-                ).ToList()
-            );
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
     }
 }

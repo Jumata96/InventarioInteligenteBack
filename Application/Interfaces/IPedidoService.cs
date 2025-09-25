@@ -11,6 +11,6 @@ namespace InventarioInteligenteBack.Application.Interfaces
         Task<PedidoReadDto?> GetByIdAsync(int id);
 
         // Crear un pedido nuevo
-        Task<PedidoReadDto?> CreateAsync(PedidoCreateDto dto, string usuarioId);
+        Task<PedidoReadDto> CreateAsync(PedidoCreateDto dto, string usuarioId);
     }
 }

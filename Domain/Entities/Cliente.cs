@@ -9,7 +9,7 @@ namespace InventarioInteligenteBack.Domain.Entities
         public string? Telefono { get; set; }                // varchar(50)
         public string? Direccion { get; set; }               // varchar(300)
         public int PaisId { get; set; }
-        public bool Activo { get; set; } = true;
+        public int Estado { get; set; } = 1;
         public DateTime FechaCreacion { get; set; }
         public DateTime? FechaEdicion { get; set; }
         public DateTime? FechaEliminacion { get; set; }

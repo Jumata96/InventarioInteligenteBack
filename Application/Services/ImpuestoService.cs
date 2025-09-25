@@ -14,22 +14,22 @@ namespace InventarioInteligenteBack.Application.Services
         public async Task<IEnumerable<ImpuestoReadDto>> GetAllAsync()
         {
             return await _db.Impuestos
-                .Select(i => new ImpuestoReadDto(i.ImpuestoId, i.PaisId, i.Nombre, i.Porcentaje, i.Activo))
+                .Select(i => new ImpuestoReadDto(i.ImpuestoId, i.PaisId, i.Nombre, i.Porcentaje, i.Estado ))
                 .ToListAsync();
         }
 
         public async Task<IEnumerable<ImpuestoReadDto>> GetByPaisAsync(int paisId)
         {
             return await _db.Impuestos
-                .Where(i => i.PaisId == paisId && i.Activo)
-                .Select(i => new ImpuestoReadDto(i.ImpuestoId, i.PaisId, i.Nombre, i.Porcentaje, i.Activo))
+                .Where(i => i.PaisId == paisId && i.Estado == 1)
+                .Select(i => new ImpuestoReadDto(i.ImpuestoId, i.PaisId, i.Nombre, i.Porcentaje, i.Estado ))
                 .ToListAsync();
         }
 
         public async Task<ImpuestoReadDto?> GetByIdAsync(int id)
         {
             var i = await _db.Impuestos.FindAsync(id);
-            return i == null ? null : new ImpuestoReadDto(i.ImpuestoId, i.PaisId, i.Nombre, i.Porcentaje, i.Activo);
+            return i == null ? null : new ImpuestoReadDto(i.ImpuestoId, i.PaisId, i.Nombre, i.Porcentaje, i.Estado);
         }
 
         public async Task<ImpuestoReadDto> CreateAsync(ImpuestoCreateDto dto)
@@ -39,14 +39,14 @@ namespace InventarioInteligenteBack.Application.Services
                 PaisId = dto.PaisId,
                 Nombre = dto.Nombre,
                 Porcentaje = dto.Porcentaje,
-                Activo = true,
+                Estado = 1,
                 FechaCreacion = DateTime.UtcNow
             };
 
             _db.Impuestos.Add(impuesto);
             await _db.SaveChangesAsync();
 
-            return new ImpuestoReadDto(impuesto.ImpuestoId, impuesto.PaisId, impuesto.Nombre, impuesto.Porcentaje, impuesto.Activo);
+            return new ImpuestoReadDto(impuesto.ImpuestoId, impuesto.PaisId, impuesto.Nombre, impuesto.Porcentaje, impuesto.Estado);
         }
 
         public async Task<bool> DeleteAsync(int id)
@@ -54,7 +54,7 @@ namespace InventarioInteligenteBack.Application.Services
             var impuesto = await _db.Impuestos.FindAsync(id);
             if (impuesto == null) return false;
 
-            impuesto.Activo = false;
+            impuesto.Estado = 2;
             impuesto.FechaEliminacion = DateTime.UtcNow;
 
             await _db.SaveChangesAsync();

@@ -7,7 +7,7 @@ namespace InventarioInteligenteBack.Domain.Entities
         public string? Descripcion { get; set; }
         public decimal Precio { get; set; }
         public int Stock { get; set; }
-        public bool Activo { get; set; } = true;
+        public int Estado { get; set; } = 1;
 
         public DateTime FechaCreacion { get; set; }
         public DateTime? FechaEdicion { get; set; }

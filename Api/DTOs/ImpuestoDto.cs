@@ -11,6 +11,6 @@ namespace InventarioInteligenteBack.Api.DTOs
         int PaisId,
         string Nombre,
         decimal Porcentaje,
-        bool Activo
+        int Estado
     );
 }

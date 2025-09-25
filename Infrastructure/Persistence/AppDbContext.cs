@@ -29,7 +29,7 @@ namespace InventarioInteligenteBack.Infrastructure.Persistence
                 e.Property(x => x.Codigo).HasColumnType("varchar(2)").IsRequired();
                 e.HasIndex(x => x.Codigo).IsUnique();
                 e.Property(x => x.Nombre).HasColumnType("varchar(100)").IsRequired();
-                e.Property(x => x.Activo).HasDefaultValue(true);
+                e.Property(x => x.Estado).HasDefaultValue(1);
                 e.Property(x => x.FechaCreacion).HasColumnType("datetime2").HasDefaultValueSql("SYSUTCDATETIME()");
             });
 

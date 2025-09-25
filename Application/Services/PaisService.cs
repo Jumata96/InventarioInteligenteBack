@@ -14,14 +14,14 @@ namespace InventarioInteligenteBack.Application.Services
         public async Task<IEnumerable<PaisReadDto>> GetAllAsync()
         {
             return await _db.Paises
-                .Select(p => new PaisReadDto(p.PaisId, p.Codigo, p.Nombre, p.Activo))
+                .Select(p => new PaisReadDto(p.PaisId, p.Codigo, p.Nombre, p.Estado))
                 .ToListAsync();
         }
 
         public async Task<PaisReadDto?> GetByIdAsync(int id)
         {
             var p = await _db.Paises.FindAsync(id);
-            return p == null ? null : new PaisReadDto(p.PaisId, p.Codigo, p.Nombre, p.Activo);
+            return p == null ? null : new PaisReadDto(p.PaisId, p.Codigo, p.Nombre, p.Estado);
         }
 
         public async Task<PaisReadDto> CreateAsync(PaisCreateDto dto)
@@ -30,14 +30,14 @@ namespace InventarioInteligenteBack.Application.Services
             {
                 Codigo = dto.Codigo,
                 Nombre = dto.Nombre,
-                Activo = true,
+                Estado = 1,
                 FechaCreacion = DateTime.UtcNow
             };
 
             _db.Paises.Add(pais);
             await _db.SaveChangesAsync();
 
-            return new PaisReadDto(pais.PaisId, pais.Codigo, pais.Nombre, pais.Activo);
+            return new PaisReadDto(pais.PaisId, pais.Codigo, pais.Nombre, pais.Estado);
         }
 
         public async Task<bool> DeleteAsync(int id)
@@ -45,7 +45,7 @@ namespace InventarioInteligenteBack.Application.Services
             var pais = await _db.Paises.FindAsync(id);
             if (pais == null) return false;
 
-            pais.Activo = false;
+            pais.Estado = 0;
             pais.FechaEliminacion = DateTime.UtcNow;
 
             await _db.SaveChangesAsync();

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace InventarioInteligenteBack.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class IdentityInit : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -58,7 +58,7 @@ namespace InventarioInteligenteBack.Infrastructure.Persistence.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Codigo = table.Column<string>(type: "varchar(2)", nullable: false),
                     Nombre = table.Column<string>(type: "varchar(100)", nullable: false),
-                    Activo = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
+                    Estado = table.Column<int>(type: "int", nullable: false, defaultValue: 1),
                     FechaCreacion = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "SYSUTCDATETIME()"),
                     FechaEdicion = table.Column<DateTime>(type: "datetime2", nullable: true),
                     FechaEliminacion = table.Column<DateTime>(type: "datetime2", nullable: true)
@@ -78,7 +78,7 @@ namespace InventarioInteligenteBack.Infrastructure.Persistence.Migrations
                     Descripcion = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Precio = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     Stock = table.Column<int>(type: "int", nullable: false),
-                    Activo = table.Column<bool>(type: "bit", nullable: false),
+                    Estado = table.Column<int>(type: "int", nullable: false),
                     FechaCreacion = table.Column<DateTime>(type: "datetime2", nullable: false),
                     FechaEdicion = table.Column<DateTime>(type: "datetime2", nullable: true),
                     FechaEliminacion = table.Column<DateTime>(type: "datetime2", nullable: true)
@@ -100,7 +100,7 @@ namespace InventarioInteligenteBack.Infrastructure.Persistence.Migrations
                     Tipo = table.Column<string>(type: "varchar(10)", nullable: false),
                     Valor = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     MinimoSubtotal = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    Activo = table.Column<bool>(type: "bit", nullable: false),
+                    Estado = table.Column<int>(type: "int", nullable: false),
                     FechaCreacion = table.Column<DateTime>(type: "datetime2", nullable: false),
                     FechaEdicion = table.Column<DateTime>(type: "datetime2", nullable: true),
                     FechaEliminacion = table.Column<DateTime>(type: "datetime2", nullable: true)
@@ -229,7 +229,7 @@ namespace InventarioInteligenteBack.Infrastructure.Persistence.Migrations
                     Telefono = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Direccion = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     PaisId = table.Column<int>(type: "int", nullable: false),
-                    Activo = table.Column<bool>(type: "bit", nullable: false),
+                    Estado = table.Column<int>(type: "int", nullable: false),
                     FechaCreacion = table.Column<DateTime>(type: "datetime2", nullable: false),
                     FechaEdicion = table.Column<DateTime>(type: "datetime2", nullable: true),
                     FechaEliminacion = table.Column<DateTime>(type: "datetime2", nullable: true)
@@ -253,7 +253,7 @@ namespace InventarioInteligenteBack.Infrastructure.Persistence.Migrations
                     PaisId = table.Column<int>(type: "int", nullable: false),
                     Nombre = table.Column<string>(type: "varchar(50)", nullable: false),
                     Porcentaje = table.Column<decimal>(type: "decimal(5,2)", nullable: false),
-                    Activo = table.Column<bool>(type: "bit", nullable: false),
+                    Estado = table.Column<int>(type: "int", nullable: false),
                     FechaCreacion = table.Column<DateTime>(type: "datetime2", nullable: false),
                     FechaEdicion = table.Column<DateTime>(type: "datetime2", nullable: true),
                     FechaEliminacion = table.Column<DateTime>(type: "datetime2", nullable: true)
@@ -275,7 +275,7 @@ namespace InventarioInteligenteBack.Infrastructure.Persistence.Migrations
                     PedidoId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     ClienteId = table.Column<int>(type: "int", nullable: false),
-                    UsuarioId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UsuarioId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Fecha = table.Column<DateTime>(type: "datetime2", nullable: false),
                     PaisId = table.Column<int>(type: "int", nullable: false),
                     Subtotal = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
@@ -287,12 +287,17 @@ namespace InventarioInteligenteBack.Infrastructure.Persistence.Migrations
                     Activo = table.Column<bool>(type: "bit", nullable: false),
                     FechaCreacion = table.Column<DateTime>(type: "datetime2", nullable: false),
                     FechaEdicion = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    FechaEliminacion = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    ProductoId = table.Column<int>(type: "int", nullable: false)
+                    FechaEliminacion = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Pedidos", x => x.PedidoId);
+                    table.ForeignKey(
+                        name: "FK_Pedidos_AspNetUsers_UsuarioId",
+                        column: x => x.UsuarioId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Pedidos_Clientes_ClienteId",
                         column: x => x.ClienteId,
@@ -303,12 +308,6 @@ namespace InventarioInteligenteBack.Infrastructure.Persistence.Migrations
                         column: x => x.PaisId,
                         principalTable: "Paises",
                         principalColumn: "PaisId");
-                    table.ForeignKey(
-                        name: "FK_Pedidos_Productos_ProductoId",
-                        column: x => x.ProductoId,
-                        principalTable: "Productos",
-                        principalColumn: "ProductoId",
-                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -322,7 +321,7 @@ namespace InventarioInteligenteBack.Infrastructure.Persistence.Migrations
                     Cantidad = table.Column<int>(type: "int", nullable: false),
                     PrecioUnitario = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     Subtotal = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    Activo = table.Column<bool>(type: "bit", nullable: false),
+                    Estado = table.Column<int>(type: "int", nullable: false),
                     FechaCreacion = table.Column<DateTime>(type: "datetime2", nullable: false),
                     FechaEdicion = table.Column<DateTime>(type: "datetime2", nullable: true),
                     FechaEliminacion = table.Column<DateTime>(type: "datetime2", nullable: true)
@@ -426,9 +425,9 @@ namespace InventarioInteligenteBack.Infrastructure.Persistence.Migrations
                 column: "PaisId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Pedidos_ProductoId",
+                name: "IX_Pedidos_UsuarioId",
                 table: "Pedidos",
-                column: "ProductoId");
+                column: "UsuarioId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Productos_Nombre",
@@ -468,16 +467,16 @@ namespace InventarioInteligenteBack.Infrastructure.Persistence.Migrations
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
-                name: "AspNetUsers");
-
-            migrationBuilder.DropTable(
                 name: "Pedidos");
 
             migrationBuilder.DropTable(
-                name: "Clientes");
+                name: "Productos");
 
             migrationBuilder.DropTable(
-                name: "Productos");
+                name: "AspNetUsers");
+
+            migrationBuilder.DropTable(
+                name: "Clientes");
 
             migrationBuilder.DropTable(
                 name: "Paises");
