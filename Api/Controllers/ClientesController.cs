@@ -39,11 +39,15 @@ namespace InventarioInteligenteBack.Api.Controllers
             return result ? NoContent() : NotFound();
         }
         [HttpGet("paged")]
-        public async Task<IActionResult> GetPaged([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        public async Task<IActionResult> GetPaged(
+        [FromQuery] int page = 0,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? q = null)
         {
-            var (data, totalCount) = await _service.GetPagedAsync(page, pageSize);
-            return Ok(new { data, totalCount });
+            var result = await _service.GetPagedAsync(page, pageSize, q);
+            return Ok(result);
         }
+
         [HttpPatch("{id}/enable")]
         public async Task<IActionResult> Enable(int id)
         {
@@ -56,7 +60,7 @@ namespace InventarioInteligenteBack.Api.Controllers
         {
             var ok = await _service.DisableAsync(id);
             return ok ? NoContent() : NotFound();
-        } 
+        }
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] ClienteUpdateDto dto)
         {

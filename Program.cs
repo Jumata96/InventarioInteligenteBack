@@ -69,6 +69,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+// 4. Registro de servicios de aplicación
 builder.Services.AddScoped<
     InventarioInteligenteBack.Application.Interfaces.IProductoService,
     InventarioInteligenteBack.Application.Services.ProductoService>();
@@ -85,7 +86,11 @@ builder.Services.AddScoped<
     InventarioInteligenteBack.Application.Interfaces.IPedidoService,
     InventarioInteligenteBack.Application.Services.PedidoService>();
 
+builder.Services.AddScoped<
+    InventarioInteligenteBack.Application.Interfaces.IImpuestoService,
+    InventarioInteligenteBack.Application.Services.ImpuestoService>();
 
+// 5. API y controladores
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 

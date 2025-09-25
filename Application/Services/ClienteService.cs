@@ -95,31 +95,46 @@ namespace InventarioInteligenteBack.Application.Services
             return true;
         }
 
-        public async Task<(IEnumerable<ClienteReadDto>, int)> GetPagedAsync(int page, int pageSize)
+        public async Task<ClientePagedDto<ClienteReadDto>> GetPagedAsync(int page, int pageSize, string? query = null)
         {
-            var query = _db.Clientes.Include(c => c.Pais).AsQueryable();
+            if (page < 0) page = 0;
 
-            var totalCount = await query.CountAsync();
+            var q = _db.Clientes.AsQueryable();
 
-            var data = await query
-                .OrderBy(c => c.ClienteId)
-                .Skip((page - 1) * pageSize)
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                var lower = query.ToLower();
+                q = q.Where(c =>
+                    c.Nombre.ToLower().Contains(lower) ||
+                    c.Ruc.ToLower().Contains(lower)
+                );
+            }
+
+            q = q.Where(c => c.Estado != 0);
+
+            var totalCount = await q.CountAsync();
+
+            var data = await q
+                .OrderBy(c => c.Nombre)
+                .Skip(page * pageSize)
                 .Take(pageSize)
                 .Select(c => new ClienteReadDto(
                     c.ClienteId,
                     c.Ruc,
-                    c.Nombre,
+                    c.Nombre, 
                     c.Email,
                     c.Telefono,
                     c.Direccion,
-                    c.Pais.Nombre,   // 👈 aquí estaba el error
+                    c.Pais.Nombre,
                     c.PaisId,
-                    c.Estado
+                     c.Estado
                 ))
                 .ToListAsync();
 
-            return (data, totalCount);
+            return new ClientePagedDto<ClienteReadDto>(data, totalCount);
         }
+
+
 
         public async Task<bool> EnableAsync(int id)
         {

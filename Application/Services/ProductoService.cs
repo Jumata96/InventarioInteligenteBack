@@ -5,7 +5,7 @@ using InventarioInteligenteBack.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace InventarioInteligenteBack.Application.Services
-{ 
+{
     public class ProductoService : IProductoService
     {
         private readonly AppDbContext _db;
@@ -106,15 +106,27 @@ namespace InventarioInteligenteBack.Application.Services
             await _db.SaveChangesAsync();
             return true;
         }
-        public async Task<ProductoPagedDto<ProductoReadDto>> GetPagedAsync(int page, int pageSize)
+        public async Task<ProductoPagedDto<ProductoReadDto>> GetPagedAsync(int page, int pageSize, string? query = null)
+
+        //public async Task<ProductoPagedDto<ProductoReadDto>> GetPagedAsync(int page, int pageSize, string? query = null)
         {
-            var query = _db.Productos.AsQueryable();
+            if (page < 0) page = 0;
 
-            var total = await query.CountAsync();
+            var q = _db.Productos.AsQueryable();
 
-            var items = await query
-                .OrderBy(p => p.ProductoId)
-                .Skip((page - 1) * pageSize)
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                var lower = query.ToLower();
+                q = q.Where(p => p.Nombre.ToLower().Contains(lower));
+            }
+
+            q = q.Where(p => p.Estado != 0);
+
+            var totalCount = await q.CountAsync();
+
+            var data = await q
+                .OrderBy(p => p.Nombre)
+                .Skip(page * pageSize)
                 .Take(pageSize)
                 .Select(p => new ProductoReadDto(
                     p.ProductoId,
@@ -126,8 +138,11 @@ namespace InventarioInteligenteBack.Application.Services
                 ))
                 .ToListAsync();
 
-            return new ProductoPagedDto<ProductoReadDto>(items, total);
+            return new ProductoPagedDto<ProductoReadDto>(data, totalCount);
         }
+
+
+
     }
 
 }

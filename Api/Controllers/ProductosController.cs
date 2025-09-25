@@ -46,11 +46,11 @@ namespace InventarioInteligenteBack.Api.Controllers
             return NoContent();
         }
         [HttpGet("paged")]
-        public async Task<IActionResult> GetPaged([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        public async Task<IActionResult> GetPaged([FromQuery] int page = 0, [FromQuery] int pageSize = 10, [FromQuery] string? q = null)
         {
-            var result = await _service.GetPagedAsync(page, pageSize);
+            var result = await _service.GetPagedAsync(page, pageSize, q);
             return Ok(result);
-        }
+        }   
 
         [HttpPatch("{id}/enable")]
         public async Task<IActionResult> Enable(int id)

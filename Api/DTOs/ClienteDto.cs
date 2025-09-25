@@ -16,7 +16,7 @@ namespace InventarioInteligenteBack.Api.DTOs
         string? Email,
         string? Telefono,
         string? Direccion,
-        string PaisNombre, 
+        string PaisNombre,
         int PaisId,
         int Estado
     );
@@ -27,5 +27,9 @@ namespace InventarioInteligenteBack.Api.DTOs
         string? Telefono,
         string? Direccion,
         int PaisId
+    );
+    public record ClientePagedDto<T>(
+        IEnumerable<T> Items,
+        int TotalCount
     );
 }
