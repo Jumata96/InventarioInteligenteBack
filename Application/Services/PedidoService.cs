@@ -70,7 +70,6 @@ namespace InventarioInteligenteBack.Application.Services
 
         public async Task<PedidoReadDto> CreateAsync(PedidoCreateDto dto, string usuarioId)
         {
-            var cliente = await _db.Clientes.FindAsync(dto.ClienteId);
             if (dto == null)
                 throw new ArgumentNullException(nameof(dto));
 
