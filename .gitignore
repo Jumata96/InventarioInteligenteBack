@@ -1,5 +1,6 @@
 ### AL ###
 # AL specific folders
+.wwwroot/
 .vscode/
 .alcache/
 .alpackages/

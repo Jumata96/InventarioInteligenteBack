@@ -31,6 +31,8 @@ namespace InventarioInteligenteBack.Application.Services
             if (await _db.Facturas.AnyAsync(f => f.PedidoId == pedidoId))
                 throw new InvalidOperationException("El pedido ya tiene factura");
 
+            //ObtenerDatosFacturaPdf(int pedidoId)
+
             var numeroFactura = $"F{DateTime.UtcNow:yyyyMMddHHmmss}";
 
             var factura = new Factura
@@ -50,8 +52,13 @@ namespace InventarioInteligenteBack.Application.Services
             _db.Facturas.Add(factura);
             await _db.SaveChangesAsync();
 
+            // Console.WriteLine($"⚠️ No había factura para PedidoId={factura}, generando nueva...");
+            // Console.WriteLine($"⚠️ No había factura para PedidoId={pedido}, generando nueva...");
             // Generar PDF real
-            var pdfBytes = _pdfService.GenerarPdf(factura, pedido);
+
+            //ObtenerDatosFacturaPdf(factura.FacturaId);
+            var datosFactura = await ObtenerDatosFacturaPdf(factura.FacturaId);
+            var pdfBytes = _pdfService.GenerarPdf2(datosFactura);
 
             // Guardar en wwwroot/storage/facturas
             var folder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "storage", "facturas");
@@ -69,17 +76,17 @@ namespace InventarioInteligenteBack.Application.Services
 
         public async Task<FacturaReadDto?> GetByPedidoAsync(int pedidoId)
         {
-            Console.WriteLine($"🔍 [FacturaService] Buscando factura para PedidoId={pedidoId}");
+            // Console.WriteLine($"🔍 [FacturaService] Buscando factura para PedidoId={pedidoId}");
 
             var factura = await _db.Facturas.FirstOrDefaultAsync(f => f.PedidoId == pedidoId);
 
             if (factura == null)
             {
-                Console.WriteLine($"⚠️ [FacturaService] No se encontró factura para PedidoId={pedidoId}");
+                // Console.WriteLine($"⚠️ [FacturaService] No se encontró factura para PedidoId={pedidoId}");
                 return null;
             }
 
-            Console.WriteLine($"✅ [FacturaService] Factura encontrada: {factura.NumeroFactura}, UrlPdf={factura.UrlPdf}");
+            // Console.WriteLine($"✅ [FacturaService] Factura encontrada: {factura.NumeroFactura}, UrlPdf={factura.UrlPdf}");
             return MapToDto(factura);
         }
 
@@ -115,5 +122,47 @@ namespace InventarioInteligenteBack.Application.Services
                 f.UrlPdf
             );
         }
+        public async Task<FacturaReadPdfDto> ObtenerDatosFacturaPdf(int facturaId)
+        {
+            var factura = await _db.Facturas
+                .Include(f => f.Pedido)
+                    .ThenInclude(p => p.Cliente)
+                .Include(f => f.Pedido)
+                    .ThenInclude(p => p.Detalles)
+                        .ThenInclude(d => d.Producto)
+                .FirstOrDefaultAsync(f => f.FacturaId == facturaId);
+
+            if (factura == null)
+                throw new Exception($"No se encontró la factura con ID {facturaId}");
+
+            var pedido = factura.Pedido;
+
+            if (pedido == null)
+                throw new Exception($"No se encontró el pedido asociado a la factura con ID {facturaId}");
+
+            return new FacturaReadPdfDto
+            {
+                NumeroFactura = factura.NumeroFactura,
+                FechaEmision = factura.FechaEmision,
+                Subtotal = factura.Subtotal,
+                Descuento = factura.Descuento,
+                Impuesto = factura.Impuesto,
+                Total = factura.Total,
+                Cliente = new ClientePdfDto
+                {
+                    Nombre = pedido.Cliente?.Nombre ?? "Cliente desconocido",
+                    Documento = pedido.Cliente?.Ruc ?? "00000000000",
+                    Direccion = pedido.Cliente?.Direccion ?? "Sin dirección"
+                },
+                Detalles = pedido.Detalles.Select(d => new DetalleFacturaPdfDto
+                {
+                    Nombre = d.Producto?.Nombre ?? "Producto genérico",
+                    Cantidad = d.Cantidad,
+                    PrecioUnitario = d.PrecioUnitario,
+                    Subtotal = d.Subtotal
+                }).ToList()
+            };
+        }
+
     }
 }

@@ -8,5 +8,6 @@ namespace InventarioInteligenteBack.Application.Interfaces
         Task<FacturaReadDto?> GetByPedidoAsync(int pedidoId);
         Task<FacturaReadDto?> GetByIdAsync(int id);
         Task<IEnumerable<FacturaReadDto>> GetAllAsync();
+        Task<FacturaReadPdfDto> ObtenerDatosFacturaPdf(int facturaId);
     }
 }
