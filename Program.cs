@@ -94,6 +94,9 @@ var app = builder.Build();
 // 👇 Habilitar CORS
 app.UseCors("AllowFrontend");
 
+// ⚠️ Middleware de manejo global de errores (antes que todo lo demás)
+app.UseMiddleware<ErrorHandlingMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
